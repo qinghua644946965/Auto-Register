@@ -278,6 +278,7 @@ def background_task(input_email):
                 captcha_1 = "等待手动"
                 print("自动处理验证码失败")
                 print("开始等待手动id....")
+                continue
             else:
                 captcha_1 = max(capt, key=capt.get)
                 print("captcha_1", captcha_1, "次数:", capt.get(captcha_1))
