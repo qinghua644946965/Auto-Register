@@ -250,7 +250,7 @@ def background_task(input_email):
         captcha_0 = re.findall(r'id=\"id_captcha_0\" name=\"captcha_0\" value=\"(\w+)\">', content)[0]
         retry = 1
         while True:
-            time.sleep(random.uniform(0.5, 1.2))
+            time.sleep(random.uniform(2.5, 5))
 
             usernames = get_user_name()
             _ = usernames.pop()
