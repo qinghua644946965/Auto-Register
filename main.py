@@ -27,6 +27,10 @@ cache = {}
 
 cache["email_v"] = "ranguoxing456@gmail.com"
 
+current_dir = os.path.dirname(os.path.abspath(__file__))
+
+print(f"Current Directory: {current_dir}")
+
 
 @app.get("/", response_class=HTMLResponse)
 async def get_form():
@@ -264,7 +268,7 @@ def background_task(input_email):
                              headers=dict(header2, **{"Cookie": header2["Cookie"].format(csrftoken)}), impersonate="chrome124")
             
             content = resp.content
-            with open("/root/Serv00-Auto-Register/static/image.jpg", "wb") as f:
+            with open(current_dir+"/static/image.jpg", "wb") as f:
                 f.write(content)
             for i in range(30):
                 _captcha_1 = ocr.classification(content).lower()
