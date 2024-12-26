@@ -25,6 +25,8 @@ os.makedirs("static", exist_ok=True)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 cache = {}
 
+cache["email_v"] = "ranguoxing456@gmail.com"
+
 
 @app.get("/", response_class=HTMLResponse)
 async def get_form():
@@ -98,8 +100,10 @@ async def get_form():
 
 @app.post("/submit")
 async def handle_form(input_email: str = Form(...), input_data: str = Form(...)):
+    cache["email_v"] = input_email
     if cache.get(input_email) and cache[input_email].get("auto"):
         cache[input_email].update({"sd": input_data})
+        cache["email_v"] = input_email
     return {"message": f"You submitted: 邮箱id：{input_email} 输入内容：{input_data}"}
 
 
@@ -165,8 +169,6 @@ def generate_random_username():
 
 
 def background_task(input_email):
-    usernames = get_user_name()
-    email = input_email
     url1 = "https://www.serv00.com/offer/create_new_account"
     # ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36 Edg/129.0.0.0"
     ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
@@ -223,15 +225,14 @@ def background_task(input_email):
         "Priority": "u=1",
     }
 
-    _ = usernames.pop()
-    first_name = _["name"]
-    last_name = _["surname"]
-    username = generate_random_username().lower()
-    logger.info(f"{email} {first_name} {last_name} {username}")
+    
 
     with requests.Session() as session:
         logger.info("获取网页信息")
         resp = session.get(url=url1, headers=header1, impersonate="chrome124")
+        logger.info("~~~~~~~~")
+        logger.info(resp)
+        logger.info("++++++++++")
         print(resp.status_code)
         headers = resp.headers
         content = resp.text
@@ -246,12 +247,24 @@ def background_task(input_email):
         retry = 1
         while True:
             time.sleep(random.uniform(0.5, 1.2))
+
+            usernames = get_user_name()
+            _ = usernames.pop()
+            first_name = _["name"]
+            last_name = _["surname"]
+            username = generate_random_username().lower()
+            input_email = cache["email_v"]
+            email = input_email
+            logger.info(f"{email} {first_name} {last_name} {username}")
+
+
             logger.info("获取验证码")
             capt = {}
             resp = session.get(url=captcha_url.format(captcha_0),
                              headers=dict(header2, **{"Cookie": header2["Cookie"].format(csrftoken)}), impersonate="chrome124")
+            
             content = resp.content
-            with open("static/image.jpg", "wb") as f:
+            with open("/root/Serv00-Auto-Register/static/image.jpg", "wb") as f:
                 f.write(content)
             for i in range(30):
                 _captcha_1 = ocr.classification(content).lower()
@@ -272,14 +285,11 @@ def background_task(input_email):
             print("captcha_0", captcha_0)
             cache[input_email] = {"auto": captcha_1}
 
-            while True and retry > 3:
-                ids = cache[input_email].get("sd")
-                if ids and bool(re.match(r'^[a-zA-Z0-9]{4}$', ids)):
-                    print(f"手动id：{ids} 自动：{captcha_1}")
-                    captcha_1 = ids
-                    break
-                time.sleep(1)
-
+            print (
+                {
+                    first_name,last_name,username,email,captcha_0,captcha_1
+                }
+            )
             data = f"csrfmiddlewaretoken={csrftoken}&first_name={first_name}&last_name={last_name}&username={username}&email={quote(email)}&captcha_0={captcha_0}&captcha_1={captcha_1}&question=0&tos=on"
             time.sleep(random.uniform(0.5, 1.2))
             logger.info("请求信息")
@@ -294,7 +304,14 @@ def background_task(input_email):
                 logger.warning("验证码错误，正在重新获取")
                 time.sleep(random.uniform(0.5, 1.2))
                 continue
+            elif content["username"][0] == "Maintenance time. Try again later.":
+                captcha_0 = content["__captcha_key"]
+                retry += 1
+                logger.warning("Maintenance time. Try again later....")
+                time.sleep(random.uniform(0.5, 1.2))
+                continue
             else:
+                logger.warning("貌似注册成功了~~~~~....")
                 break
 
     cache[input_email].clear()
