@@ -4,8 +4,9 @@ import string
 import random
 import re
 import time
-import ddddocr
 from curl_cffi import requests
+import http.client
+import json
 # import requests
 
 from urllib.parse import quote
@@ -15,8 +16,8 @@ from fastapi import FastAPI, Form, BackgroundTasks
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
+import base64
 
-ocr = ddddocr.DdddOcr()
 
 app = FastAPI()
 
@@ -26,6 +27,7 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 cache = {}
 
 cache["email_v"] = "ranguoxing456@gmail.com"
+cache["proxy_data"] = "none"
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
@@ -46,16 +48,13 @@ async def get_form():
                 <form action="/submit" method="post">
                     <img src="/static/image.jpg?timestamp={timestamp}" alt="Sample Image" width="300"/>
                     <br><br>
-                    <label for="input_email">输入邮箱id:</label>
+                    <label for="input_email">输入邮箱:</label>
                     <input type="text" id="input_email" name="input_email" value="1" oninput="saveInputValue('input_email')">
                     <br><br>
-                    <label for="input_data">输入验证码:</label>
-                    <input type="text" id="input_data" name="input_data" oninput="saveInputValue('input_data')">
+                    <label for="input_data">代理地址:</label>
+                    <input type="text" id="proxy_data" name="proxy_data" oninput="saveInputValue('proxy_data')">
                     <br><br>
-                    <label for="display_string">自动处理验证码:</label>
-                    <input type="text" id="display_string" name="display_string" value="{example_string}" readonly onclick="refreshDisplayString()">
-                    <br><br>
-                    <button type="submit">手动提交</button>
+                    <button type="submit">更新数据</button>
                     <button type="button" onclick="startTask()">开始任务</button>
                 </form>
                 <script>
@@ -71,15 +70,6 @@ async def get_form():
                     function saveInputValue(id) {{
                         const input = document.getElementById(id);
                         localStorage.setItem(id, input.value);
-                    }}
-
-                    function refreshDisplayString() {{
-                        const inputId = document.getElementById('input_email').value;
-                        fetch(`/refresh-display-string?input_email=${{inputId}}`)
-                            .then(response => response.json())
-                            .then(data => {{
-                                document.getElementById('display_string').value = data.display_string;
-                            }});
                     }}
 
                     function startTask() {{
@@ -103,12 +93,10 @@ async def get_form():
 
 
 @app.post("/submit")
-async def handle_form(input_email: str = Form(...), input_data: str = Form(...)):
+async def handle_form(input_email: str = Form(...), proxy_data: str = Form(...)):
     cache["email_v"] = input_email
-    if cache.get(input_email) and cache[input_email].get("auto"):
-        cache[input_email].update({"sd": input_data})
-        cache["email_v"] = input_email
-    return {"message": f"You submitted: 邮箱id：{input_email} 输入内容：{input_data}"}
+    cache["proxy_data"] = proxy_data
+    return {"message": f"You submitted: 邮箱：{input_email} 代理地址：{proxy_data}"}
 
 
 @app.get("/static/image.jpg")
@@ -119,18 +107,6 @@ async def get_image():
         })
     except:
         return HTMLResponse("")
-
-
-@app.get("/refresh-display-string")
-async def refresh_display_string(input_email: str):
-    ns = cache.get(input_email, {"auto": None, "sd": None})
-    if ns.get('sd'):
-        ns = f"手动：{ns.get('sd')}"
-    elif ns.get('auto'):
-        ns = f"自动：{ns.get('auto')}"
-    else:
-        ns = "未获取到内容"
-    return {"display_string": ns}
 
 
 @app.post("/start-task")
@@ -229,97 +205,123 @@ def background_task(input_email):
         "Priority": "u=1",
     }
 
+
+    # 初始化变量
+    outer_condition = True
+    inner_condition = True
+
     
-
-    with requests.Session() as session:
-        logger.info("获取网页信息")
-        resp = session.get(url=url1, headers=header1, impersonate="chrome124")
-        logger.info("~~~~~~~~")
-        logger.info(resp)
-        logger.info("++++++++++")
-        print(resp.status_code)
-        headers = resp.headers
-        content = resp.text
-
-        csrftoken = re.findall(r"csrftoken=(\w+);", headers.get("set-cookie"))[0]
-        # csrftoken = csrftoken or re.findall(r"input type='hidden' name='csrfmiddlewaretoken' value='(\w+)'", content)[0]
-        print("csrftoken", csrftoken)
-        header2["Cookie"] = header2["Cookie"].format(csrftoken)
-        header3["Cookie"] = header3["Cookie"].format(csrftoken)
-
-        captcha_0 = re.findall(r'id=\"id_captcha_0\" name=\"captcha_0\" value=\"(\w+)\">', content)[0]
-        retry = 1
-        while True:
-            time.sleep(random.uniform(2.5, 5))
-
-            usernames = get_user_name()
-            _ = usernames.pop()
-            first_name = _["name"]
-            last_name = _["surname"]
-            username = generate_random_username().lower()
-            input_email = cache["email_v"]
-            email = input_email
-            logger.info(f"{email} {first_name} {last_name} {username}")
-
-
-            logger.info("获取验证码")
-            capt = {}
-            resp = session.get(url=captcha_url.format(captcha_0),
-                             headers=dict(header2, **{"Cookie": header2["Cookie"].format(csrftoken)}), impersonate="chrome124")
+    while outer_condition:
+        inner_condition = True
+        with requests.Session() as session:
+            logger.info("获取网页信息")
+            proxy_data = cache["proxy_data"]
+            print("proxy_data : "+proxy_data)
+            proxies = {}
+            if proxy_data != "none" and proxy_data != "" :
+                proxies = {"https": proxy_data}
             
-            content = resp.content
-            with open(current_dir+"/static/image.jpg", "wb") as f:
-                f.write(content)
-            for i in range(30):
-                _captcha_1 = ocr.classification(content).lower()
-                if bool(re.match(r'^[a-zA-Z0-9]{4}$', _captcha_1)):
-                    if capt.get(_captcha_1):
-                        capt[_captcha_1] += 1
-                    else:
-                        capt[_captcha_1] = 1
-            if len(capt) == 0:
-                retry = 99
-                captcha_1 = "等待手动"
-                print("自动处理验证码失败")
-                print("开始等待手动id....")
-                continue
-            else:
-                captcha_1 = max(capt, key=capt.get)
-                print("captcha_1", captcha_1, "次数:", capt.get(captcha_1))
-
-            print("captcha_0", captcha_0)
-            cache[input_email] = {"auto": captcha_1}
-
-            print (
-                {
-                    first_name,last_name,username,email,captcha_0,captcha_1
-                }
-            )
-            data = f"csrfmiddlewaretoken={csrftoken}&first_name={first_name}&last_name={last_name}&username={username}&email={quote(email)}&captcha_0={captcha_0}&captcha_1={captcha_1}&question=0&tos=on"
-            time.sleep(random.uniform(0.5, 1.2))
-            logger.info("请求信息")
-            resp = session.post(url=url3, headers=dict(header3, **{"Cookie": header3["Cookie"].format(csrftoken)}),
-                                data=data, impersonate="chrome124")
+            proxies = {"https": proxy_data}
+            resp = session.get(url=url1, headers=header1, impersonate="chrome124",proxies=proxies)
+            logger.info("~~~~~~~~")
+            logger.info(resp)
+            logger.info("++++++++++")
             print(resp.status_code)
-            print(resp.text)
-            content = resp.json()
-            if content.get("captcha") and content["captcha"][0] == "Invalid CAPTCHA":
-                captcha_0 = content["__captcha_key"]
-                retry += 1
-                logger.warning("验证码错误，正在重新获取")
-                time.sleep(random.uniform(0.5, 1.2))
-                continue
-            elif content["username"][0] == "Maintenance time. Try again later.":
-                captcha_0 = content["__captcha_key"]
-                retry += 1
-                logger.warning("Maintenance time. Try again later....")
-                time.sleep(random.uniform(0.5, 1.2))
-                continue
-            else:
-                logger.warning("貌似注册成功了~~~~~....")
-                break
+            headers = resp.headers
+            content = resp.text
 
-    cache[input_email].clear()
+            csrftoken = re.findall(r"csrftoken=(\w+);", headers.get("set-cookie"))[0]
+            # csrftoken = csrftoken or re.findall(r"input type='hidden' name='csrfmiddlewaretoken' value='(\w+)'", content)[0]
+            print("csrftoken", csrftoken)
+            header2["Cookie"] = header2["Cookie"].format(csrftoken)
+            header3["Cookie"] = header3["Cookie"].format(csrftoken)
+
+            captcha_0 = re.findall(r'id=\"id_captcha_0\" name=\"captcha_0\" value=\"(\w+)\">', content)[0]
+            while inner_condition:
+                if proxy_data != cache["proxy_data"]:
+                    print("代理地址发生变化~~~~~")
+                    inner_condition = False
+                    continue
+                time.sleep(random.uniform(2.5, 5))
+                usernames = get_user_name()
+                _ = usernames.pop()
+                first_name = _["name"]
+                last_name = _["surname"]
+                username = generate_random_username().lower()
+                input_email = cache["email_v"]
+                email = input_email
+                logger.info(f"{email} {first_name} {last_name} {username}")
+
+
+                logger.info("获取验证码")
+                capt = {}
+                resp = session.get(url=captcha_url.format(captcha_0),
+                                headers=dict(header2, **{"Cookie": header2["Cookie"].format(csrftoken)}), impersonate="chrome124",proxies=proxies)
+                
+                content = resp.content
+
+                with open(current_dir+"/static/image.jpg", "wb") as f:
+                    f.write(content)
+
+                base64image =  base64.b64encode(content)
+                
+                url = "https://cpatche-recognize.onrender.com/api"
+
+                payload = json.dumps({
+                    "image": "data:image/png;base64," + base64image
+                })
+                headers = {
+                    'Content-Type': 'application/json'
+                }
+
+                response = requests.request("POST", url, headers=headers, data=payload)
+
+                response_text = response.text
+
+                print(response_text)
+
+                # 将响应数据转换为 JSON 对象
+                try:
+                    json_response = json.loads(response_text)
+                    print("识别验证码成功 Response JSON:", json_response)
+                    captcha_1 = json_response["data"]
+                except json.JSONDecodeError:
+                    print("Response is not valid JSON:", response_text)
+                    print ("识别验证码失败")
+                    continue    
+
+
+                print("captcha_0", captcha_0)
+
+                print (
+                    {
+                        first_name,last_name,username,email,captcha_0,captcha_1
+                    }
+                )
+                data = f"csrfmiddlewaretoken={csrftoken}&first_name={first_name}&last_name={last_name}&username={username}&email={quote(email)}&captcha_0={captcha_0}&captcha_1={captcha_1}&question=0&tos=on"
+                time.sleep(random.uniform(0.5, 1.2))
+                logger.info("请求信息")
+                resp = session.post(url=url3, headers=dict(header3, **{"Cookie": header3["Cookie"].format(csrftoken)}),
+                                    data=data, impersonate="chrome124",proxies=proxies)
+                print(resp.status_code)
+                print(resp.text)
+                content = resp.json()
+                if content.get("captcha") and content["captcha"][0] == "Invalid CAPTCHA":
+                    captcha_0 = content["__captcha_key"]
+                    logger.warning("验证码错误，正在重新获取")
+                    time.sleep(random.uniform(0.5, 1.2))
+                    continue
+                elif content["username"][0] == "Maintenance time. Try again later.":
+                    captcha_0 = content["__captcha_key"]
+                    logger.warning("Maintenance time. Try again later....")
+                    time.sleep(random.uniform(0.5, 1.2))
+                    continue
+                else:
+                    logger.warning("貌似注册成功了~~~~~....")
+                    outer_condition = False
+                    inner_condition = False
+                    break
+
     os.remove("static/image.jpg")
 
 
