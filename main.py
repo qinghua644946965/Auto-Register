@@ -18,7 +18,6 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 import base64
 
-
 app = FastAPI()
 
 # 静态文件目录
@@ -61,9 +60,9 @@ async def get_form():
                     // 在页面加载时恢复文本框内容
                     window.onload = function() {{
                         const inputId = document.getElementById('input_email');
-                        const inputData = document.getElementById('input_data');
+                        const proxy_data = document.getElementById('proxy_data');
                         inputId.value = localStorage.getItem('input_email') || 'xxxxx@gmail.com';
-                        inputData.value = localStorage.getItem('input_data') || '';
+                        proxy_data.value = localStorage.getItem('proxy_data') || '';
                     }};
 
                     // 保存文本框内容到本地存储
@@ -93,7 +92,8 @@ async def get_form():
 
 
 @app.post("/submit")
-async def handle_form(input_email: str = Form(...), proxy_data: str = Form(...)):
+async def handle_form(input_email: str = Form(...),
+                      proxy_data: str = Form(...)):
     cache["email_v"] = input_email
     cache["proxy_data"] = proxy_data
     return {"message": f"You submitted: 邮箱：{input_email} 代理地址：{proxy_data}"}
@@ -102,9 +102,8 @@ async def handle_form(input_email: str = Form(...), proxy_data: str = Form(...))
 @app.get("/static/image.jpg")
 async def get_image():
     try:
-        return FileResponse("static/image.jpg", headers={
-            "Cache-Control": "no-store"
-        })
+        return FileResponse("static/image.jpg",
+                            headers={"Cache-Control": "no-store"})
     except:
         return HTMLResponse("")
 
@@ -120,9 +119,12 @@ def get_user_name():
     url = "http://www.ivtool.com/random-name-generater/uinames/api/index.php?region=united states&gender=female&amount=5&="
     header = {
         "Host": "www.ivtool.com",
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:127.0) Gecko/20100101 Firefox/127.0",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
-        "Accept-Language": "zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2",
+        "User-Agent":
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:127.0) Gecko/20100101 Firefox/127.0",
+        "Accept":
+        "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+        "Accept-Language":
+        "zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2",
         "Accept-Encoding": "gzip, deflate, br, zstd",
         "Connection": "keep-alive",
         "Upgrade-Insecure-Requests": "1",
@@ -156,8 +158,10 @@ def background_task(input_email):
     header1 = {
         "Host": "www.serv00.com",
         "User-Agent": ua,
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
-        "Accept-Language": "zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2",
+        "Accept":
+        "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+        "Accept-Language":
+        "zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2",
         "Connection": "keep-alive",
         # "Referer": "https://www.serv00.com/offer/create_new_account",
         "Referer": "https://www.serv00.com/offer",
@@ -175,7 +179,8 @@ def background_task(input_email):
         "Host": "www.serv00.com",
         "User-Agent": ua,
         "Accept": "image/avif,image/webp,*/*",
-        "Accept-Language": "zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2",
+        "Accept-Language":
+        "zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2",
         "Sec-GPC": "1",
         "Connection": "keep-alive",
         "Referer": "https://www.serv00.com/offer/create_new_account",
@@ -192,7 +197,8 @@ def background_task(input_email):
         "Host": "www.serv00.com",
         "User-Agent": ua,
         "Accept": "*/*",
-        "Accept-Language": "zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2",
+        "Accept-Language":
+        "zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2",
         "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
         "X-Requested-With": "XMLHttpRequest",
         "Origin": "https://www.serv00.com",
@@ -205,24 +211,32 @@ def background_task(input_email):
         "Priority": "u=1",
     }
 
-
     # 初始化变量
     outer_condition = True
     inner_condition = True
 
-    
     while outer_condition:
         inner_condition = True
         with requests.Session() as session:
             logger.info("获取网页信息")
             proxy_data = cache["proxy_data"]
-            print("proxy_data : "+proxy_data)
+            print("proxy_data : " + proxy_data)
+            print(proxy_data != "none" and proxy_data != "")
             proxies = {}
-            if proxy_data != "none" and proxy_data != "" :
+            if ((proxy_data != "none") and (proxy_data != "")):
                 proxies = {"https": proxy_data}
-            
-            proxies = {"https": proxy_data}
-            resp = session.get(url=url1, headers=header1, impersonate="chrome124",proxies=proxies)
+
+            if "https" in proxies:
+                print("proxy~~~~~~~")
+                resp = session.get(url=url1,
+                                   headers=header1,
+                                   impersonate="chrome124",
+                                   proxies=proxies)
+            else:
+                print("no proxy~~~~~~~")
+                resp = session.get(url=url1,
+                                   headers=header1,
+                                   impersonate="chrome124")
             logger.info("~~~~~~~~")
             logger.info(resp)
             logger.info("++++++++++")
@@ -230,13 +244,16 @@ def background_task(input_email):
             headers = resp.headers
             content = resp.text
 
-            csrftoken = re.findall(r"csrftoken=(\w+);", headers.get("set-cookie"))[0]
+            csrftoken = re.findall(r"csrftoken=(\w+);",
+                                   headers.get("set-cookie"))[0]
             # csrftoken = csrftoken or re.findall(r"input type='hidden' name='csrfmiddlewaretoken' value='(\w+)'", content)[0]
             print("csrftoken", csrftoken)
             header2["Cookie"] = header2["Cookie"].format(csrftoken)
             header3["Cookie"] = header3["Cookie"].format(csrftoken)
 
-            captcha_0 = re.findall(r'id=\"id_captcha_0\" name=\"captcha_0\" value=\"(\w+)\">', content)[0]
+            captcha_0 = re.findall(
+                r'id=\"id_captcha_0\" name=\"captcha_0\" value=\"(\w+)\">',
+                content)[0]
             while inner_condition:
                 if proxy_data != cache["proxy_data"]:
                     print("代理地址发生变化~~~~~")
@@ -252,29 +269,41 @@ def background_task(input_email):
                 email = input_email
                 logger.info(f"{email} {first_name} {last_name} {username}")
 
-
                 logger.info("获取验证码")
                 capt = {}
-                resp = session.get(url=captcha_url.format(captcha_0),
-                                headers=dict(header2, **{"Cookie": header2["Cookie"].format(csrftoken)}), impersonate="chrome124",proxies=proxies)
-                
+                if "https" in proxies:
+                    resp = session.get(
+                        url=captcha_url.format(captcha_0),
+                        headers=dict(
+                            header2,
+                            **{"Cookie": header2["Cookie"].format(csrftoken)}),
+                        impersonate="chrome124",
+                        proxies=proxies)
+                else:
+                    resp = session.get(
+                        url=captcha_url.format(captcha_0),
+                        headers=dict(
+                            header2,
+                            **{"Cookie": header2["Cookie"].format(csrftoken)}),
+                        impersonate="chrome124")
+
                 content = resp.content
 
-                with open(current_dir+"/static/image.jpg", "wb") as f:
+                with open(current_dir + "/static/image.jpg", "wb") as f:
                     f.write(content)
 
-                base64image =  base64.b64encode(content)
-                
-                url = "https://cpatche-recognize.onrender.com/api"
+                base64_string = base64.b64encode(content).decode('utf-8')
 
-                payload = json.dumps({
-                    "image": "data:image/png;base64," + base64image
-                })
-                headers = {
-                    'Content-Type': 'application/json'
-                }
+                url = "https://uncertain-beitris-xiaoerje-6e06a8d9.koyeb.app/api"
 
-                response = requests.request("POST", url, headers=headers, data=payload)
+                payload = json.dumps(
+                    {"image": "data:image/png;base64," + base64_string})
+                headers = {'Content-Type': 'application/json'}
+
+                response = requests.request("POST",
+                                            url,
+                                            headers=headers,
+                                            data=payload)
 
                 response_text = response.text
 
@@ -287,31 +316,46 @@ def background_task(input_email):
                     captcha_1 = json_response["data"]
                 except json.JSONDecodeError:
                     print("Response is not valid JSON:", response_text)
-                    print ("识别验证码失败")
-                    continue    
-
+                    print("识别验证码失败")
+                    continue
 
                 print("captcha_0", captcha_0)
 
-                print (
-                    {
-                        first_name,last_name,username,email,captcha_0,captcha_1
-                    }
-                )
+                print({
+                    first_name, last_name, username, email, captcha_0,
+                    captcha_1
+                })
                 data = f"csrfmiddlewaretoken={csrftoken}&first_name={first_name}&last_name={last_name}&username={username}&email={quote(email)}&captcha_0={captcha_0}&captcha_1={captcha_1}&question=0&tos=on"
                 time.sleep(random.uniform(0.5, 1.2))
                 logger.info("请求信息")
-                resp = session.post(url=url3, headers=dict(header3, **{"Cookie": header3["Cookie"].format(csrftoken)}),
-                                    data=data, impersonate="chrome124",proxies=proxies)
+                if "https" in proxies:
+                    resp = session.post(
+                        url=url3,
+                        headers=dict(
+                            header3,
+                            **{"Cookie": header3["Cookie"].format(csrftoken)}),
+                        data=data,
+                        impersonate="chrome124",
+                        proxies=proxies)
+                else:
+                    resp = session.post(
+                        url=url3,
+                        headers=dict(
+                            header3,
+                            **{"Cookie": header3["Cookie"].format(csrftoken)}),
+                        data=data,
+                        impersonate="chrome124")
                 print(resp.status_code)
                 print(resp.text)
                 content = resp.json()
-                if content.get("captcha") and content["captcha"][0] == "Invalid CAPTCHA":
+                if content.get("captcha") and content["captcha"][
+                        0] == "Invalid CAPTCHA":
                     captcha_0 = content["__captcha_key"]
                     logger.warning("验证码错误，正在重新获取")
                     time.sleep(random.uniform(0.5, 1.2))
                     continue
-                elif content["username"][0] == "Maintenance time. Try again later.":
+                elif content["username"][
+                        0] == "Maintenance time. Try again later.":
                     captcha_0 = content["__captcha_key"]
                     logger.warning("Maintenance time. Try again later....")
                     time.sleep(random.uniform(0.5, 1.2))
