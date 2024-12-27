@@ -27,6 +27,16 @@
 # 注意事项
 **需要干净的ip和可用的邮箱，通过率会大幅提高！**
 
+# 安装依赖，进入到源码目录，这一步会自动安装需要的依赖
+```
+pip install --break-system-packages -r requirements.txt
+```
+
+# 执行 程序
+```
+python3 main.py
+```
+
 # 项目截图
 
 ## 注册通过
