@@ -256,7 +256,8 @@ def background_task(input_email):
                 content)[0]
             while inner_condition:
                 if proxy_data != cache["proxy_data"]:
-                    print("代理地址发生变化~~~~~")
+                    print("代理地址发生变化,任务已经停止，请重新开启任务！！！！")
+                    outer_condition = False
                     inner_condition = False
                     continue
                 time.sleep(random.uniform(2.5, 5))
