@@ -29,7 +29,7 @@
 
 # 安装依赖，进入到源码目录，这一步会自动安装需要的依赖
 ```
-pip install --break-system-packages -r requirements.txt
+pip install -r requirements.txt
 ```
 
 # 执行 程序
