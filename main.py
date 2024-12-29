@@ -348,7 +348,12 @@ def background_task(input_email):
                         impersonate="chrome124")
                 print(resp.status_code)
                 print(resp.text)
-                content = resp.json()
+                try:
+                    content = resp.json()
+                except json.JSONDecodeError:
+                    print("Response is not valid JSON:", response_text)
+                    print("提交注册失败~~~~")
+                    continue
                 if content.get("captcha") and content["captcha"][
                         0] == "Invalid CAPTCHA":
                     captcha_0 = content["__captcha_key"]
