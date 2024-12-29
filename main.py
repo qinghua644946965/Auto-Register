@@ -355,7 +355,6 @@ def background_task(input_email):
                 try:
                     content = resp.json()
                 except json.JSONDecodeError:
-                    print("Response is not valid JSON:", response_text)
                     print("提交注册失败~~~~")
                     continue
                 if content.get("captcha") and content["captcha"][
