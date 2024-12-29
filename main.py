@@ -255,125 +255,116 @@ def background_task(input_email):
                 r'id=\"id_captcha_0\" name=\"captcha_0\" value=\"(\w+)\">',
                 content)[0]
             while inner_condition:
-                if proxy_data != cache["proxy_data"]:
-                    print("代理地址发生变化,任务已经停止，请重新开启任务！！！！")
-                    outer_condition = False
-                    inner_condition = False
-                    continue
-                time.sleep(random.uniform(7.5, 30))
-                usernames = get_user_name()
-                _ = usernames.pop()
-                first_name = _["name"]
-                last_name = _["surname"]
-                username = generate_random_username().lower()
-                input_email = cache["email_v"]
-                email = input_email
-                logger.info(f"{email} {first_name} {last_name} {username}")
-
-                logger.info("获取验证码")
-                capt = {}
-                if "https" in proxies:
-                    resp = session.get(
-                        url=captcha_url.format(captcha_0),
-                        headers=dict(
-                            header2,
-                            **{"Cookie": header2["Cookie"].format(csrftoken)}),
-                        impersonate="chrome124",
-                        proxies=proxies)
-                else:
-                    resp = session.get(
-                        url=captcha_url.format(captcha_0),
-                        headers=dict(
-                            header2,
-                            **{"Cookie": header2["Cookie"].format(csrftoken)}),
-                        impersonate="chrome124")
-
-                content = resp.content
-
-                with open(current_dir + "/static/image.jpg", "wb") as f:
-                    f.write(content)
-
-                base64_string = base64.b64encode(content).decode('utf-8')
-
-                url = "https://uncertain-beitris-xiaoerje-6e06a8d9.koyeb.app/api"
-
-                payload = json.dumps(
-                    {"image": "data:image/png;base64," + base64_string})
-                headers = {'Content-Type': 'application/json'}
-
                 try:
+                    if proxy_data != cache["proxy_data"]:
+                        print("代理地址发生变化,任务已经停止，请重新开启任务！！！！")
+                        outer_condition = False
+                        inner_condition = False
+                        continue
+                    time.sleep(random.uniform(7.5, 30))
+                    usernames = get_user_name()
+                    _ = usernames.pop()
+                    first_name = _["name"]
+                    last_name = _["surname"]
+                    username = generate_random_username().lower()
+                    input_email = cache["email_v"]
+                    email = input_email
+                    logger.info(f"{email} {first_name} {last_name} {username}")
+
+                    logger.info("获取验证码")
+                    capt = {}
+                    if "https" in proxies:
+                        resp = session.get(
+                            url=captcha_url.format(captcha_0),
+                            headers=dict(
+                                header2,
+                                **{"Cookie": header2["Cookie"].format(csrftoken)}),
+                            impersonate="chrome124",
+                            proxies=proxies)
+                    else:
+                        resp = session.get(
+                            url=captcha_url.format(captcha_0),
+                            headers=dict(
+                                header2,
+                                **{"Cookie": header2["Cookie"].format(csrftoken)}),
+                            impersonate="chrome124")
+
+                    content = resp.content
+
+                    with open(current_dir + "/static/image.jpg", "wb") as f:
+                        f.write(content)
+
+                    base64_string = base64.b64encode(content).decode('utf-8')
+
+                    url = "https://uncertain-beitris-xiaoerje-6e06a8d9.koyeb.app/api"
+
+                    payload = json.dumps(
+                        {"image": "data:image/png;base64," + base64_string})
+                    headers = {'Content-Type': 'application/json'}
+
                     response = requests.request("POST",
-                                            url,
-                                            headers=headers,
-                                            data=payload)
-                except Exception:
-                    print("验证码识别接口调用失败~~~~")
-                    continue
-                    
-                response_text = response.text
+                                                url,
+                                                headers=headers,
+                                                data=payload)
+                        
+                    response_text = response.text
 
-                print(response_text)
+                    print(response_text)
 
-                # 将响应数据转换为 JSON 对象
-                try:
+                    # 将响应数据转换为 JSON 对象
                     json_response = json.loads(response_text)
                     print("识别验证码成功 Response JSON:", json_response)
                     captcha_1 = json_response["data"]
-                except json.JSONDecodeError:
-                    print("Response is not valid JSON:", response_text)
-                    print("识别验证码失败")
-                    continue
+                    print("captcha_0", captcha_0)
 
-                print("captcha_0", captcha_0)
-
-                print({
-                    first_name, last_name, username, email, captcha_0,
-                    captcha_1
-                })
-                data = f"csrfmiddlewaretoken={csrftoken}&first_name={first_name}&last_name={last_name}&username={username}&email={quote(email)}&captcha_0={captcha_0}&captcha_1={captcha_1}&question=0&tos=on"
-                time.sleep(random.uniform(0.5, 1.2))
-                logger.info("请求信息")
-                if "https" in proxies:
-                    resp = session.post(
-                        url=url3,
-                        headers=dict(
-                            header3,
-                            **{"Cookie": header3["Cookie"].format(csrftoken)}),
-                        data=data,
-                        impersonate="chrome124",
-                        proxies=proxies)
-                else:
-                    resp = session.post(
-                        url=url3,
-                        headers=dict(
-                            header3,
-                            **{"Cookie": header3["Cookie"].format(csrftoken)}),
-                        data=data,
-                        impersonate="chrome124")
-                print(resp.status_code)
-                print(resp.text)
-                try:
+                    print({
+                        first_name, last_name, username, email, captcha_0,
+                        captcha_1
+                    })
+                    data = f"csrfmiddlewaretoken={csrftoken}&first_name={first_name}&last_name={last_name}&username={username}&email={quote(email)}&captcha_0={captcha_0}&captcha_1={captcha_1}&question=0&tos=on"
+                    time.sleep(random.uniform(0.5, 1.2))
+                    logger.info("请求信息")
+                    if "https" in proxies:
+                        resp = session.post(
+                            url=url3,
+                            headers=dict(
+                                header3,
+                                **{"Cookie": header3["Cookie"].format(csrftoken)}),
+                            data=data,
+                            impersonate="chrome124",
+                            proxies=proxies)
+                    else:
+                        resp = session.post(
+                            url=url3,
+                            headers=dict(
+                                header3,
+                                **{"Cookie": header3["Cookie"].format(csrftoken)}),
+                            data=data,
+                            impersonate="chrome124")
+                    print(resp.status_code)
+                    print(resp.text)
                     content = resp.json()
-                except json.JSONDecodeError:
-                    print("提交注册失败~~~~")
+                    if content.get("captcha") and content["captcha"][
+                            0] == "Invalid CAPTCHA":
+                        captcha_0 = content["__captcha_key"]
+                        logger.warning("验证码错误，正在重新获取")
+                        time.sleep(random.uniform(0.5, 1.2))
+                        continue
+                    elif content["username"][
+                            0] == "Maintenance time. Try again later.":
+                        captcha_0 = content["__captcha_key"]
+                        logger.warning("Maintenance time. Try again later....")
+                        time.sleep(random.uniform(0.5, 1.2))
+                        continue
+                    else:
+                        logger.warning("貌似注册成功了~~~~~....")
+                        outer_condition = False
+                        inner_condition = False
+                        break
+                    
+                except Exception as e:
+                    logger.warning("未知异常,继续重试~~~~~")
                     continue
-                if content.get("captcha") and content["captcha"][
-                        0] == "Invalid CAPTCHA":
-                    captcha_0 = content["__captcha_key"]
-                    logger.warning("验证码错误，正在重新获取")
-                    time.sleep(random.uniform(0.5, 1.2))
-                    continue
-                elif content["username"][
-                        0] == "Maintenance time. Try again later.":
-                    captcha_0 = content["__captcha_key"]
-                    logger.warning("Maintenance time. Try again later....")
-                    time.sleep(random.uniform(0.5, 1.2))
-                    continue
-                else:
-                    logger.warning("貌似注册成功了~~~~~....")
-                    outer_condition = False
-                    inner_condition = False
-                    break
 
     os.remove("static/image.jpg")
 
