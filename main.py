@@ -260,7 +260,7 @@ def background_task(input_email):
                     outer_condition = False
                     inner_condition = False
                     continue
-                time.sleep(random.uniform(2.5, 5))
+                time.sleep(random.uniform(7.5, 30))
                 usernames = get_user_name()
                 _ = usernames.pop()
                 first_name = _["name"]
@@ -301,11 +301,15 @@ def background_task(input_email):
                     {"image": "data:image/png;base64," + base64_string})
                 headers = {'Content-Type': 'application/json'}
 
-                response = requests.request("POST",
+                try:
+                    response = requests.request("POST",
                                             url,
                                             headers=headers,
                                             data=payload)
-
+                except Exception:
+                    print("验证码识别接口调用失败~~~~")
+                    continue
+                    
                 response_text = response.text
 
                 print(response_text)
